@@ -101,13 +101,54 @@ Success response (`202 Accepted`):
 }
 ```
 
-Validation error (`400`):
+## Get User Endpoint
+
+Fetch one user with nested addresses by UUID:
+
+```bash
+curl http://localhost:8080/api/v1/users/83aab3ca-b0fc-409c-9cb8-60916e381c03
+```
+
+Success response (`200 OK`) returns:
+
+```json
+{
+  "data": {
+    "id": "83aab3ca-b0fc-409c-9cb8-60916e381c03",
+    "name": "Vada Nader",
+    "email": "mervinbalistreri@jaskolski.name",
+    "phone_number": "2870554836",
+    "addresses": [
+      {
+        "street": "817 East Lodgeville",
+        "city": "New York City",
+        "state": "Arkansas",
+        "zip_code": "58532",
+        "country": "France"
+      }
+    ]
+  }
+}
+```
+
+Validation error (`400`) for import:
 
 ```json
 {
   "error": {
     "code": "invalid_source",
     "message": "source_path must be a .json file"
+  }
+}
+```
+
+Validation error (`400`) for invalid user UUID:
+
+```json
+{
+  "error": {
+    "code": "invalid_user_id",
+    "message": "id must be a valid UUID"
   }
 }
 ```

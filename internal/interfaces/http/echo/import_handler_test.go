@@ -34,7 +34,7 @@ func TestImportHandlerSuccess(t *testing.T) {
 		JobID:  "job-1",
 		Status: "queued",
 	}})
-	httpecho.RegisterRoutes(e, handler)
+	httpecho.RegisterRoutes(e, handler, nil)
 
 	body := []byte(`{"source_path":"users_data.json"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/imports/users", bytes.NewReader(body))
@@ -66,7 +66,7 @@ func TestImportHandlerBadJSON(t *testing.T) {
 
 	e := echo.New()
 	handler := httpecho.NewImportHandler(&fakeImportUseCase{})
-	httpecho.RegisterRoutes(e, handler)
+	httpecho.RegisterRoutes(e, handler, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/imports/users", bytes.NewReader([]byte(`{"source_path":`)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -84,7 +84,7 @@ func TestImportHandlerInvalidSource(t *testing.T) {
 
 	e := echo.New()
 	handler := httpecho.NewImportHandler(&fakeImportUseCase{err: app.ErrInvalidImportSource})
-	httpecho.RegisterRoutes(e, handler)
+	httpecho.RegisterRoutes(e, handler, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/imports/users", bytes.NewReader([]byte(`{"source_path":""}`)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -102,7 +102,7 @@ func TestImportHandlerInternalError(t *testing.T) {
 
 	e := echo.New()
 	handler := httpecho.NewImportHandler(&fakeImportUseCase{err: errors.New("boom")})
-	httpecho.RegisterRoutes(e, handler)
+	httpecho.RegisterRoutes(e, handler, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/imports/users", bytes.NewReader([]byte(`{"source_path":"users_data.json"}`)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

@@ -20,8 +20,11 @@ func NewHTTPServer(db *gorm.DB) *echo.Echo {
 	importJobRepo := repository.NewImportJobRepository(db)
 	startImport := app.NewStartImportUsersFromJSON(importJobRepo)
 	importHandler := httpecho.NewImportHandler(startImport)
+	userQueryRepo := repository.NewUserQueryRepository(db)
+	getUserByID := app.NewGetUserByID(userQueryRepo)
+	userHandler := httpecho.NewUserHandler(getUserByID)
 
-	httpecho.RegisterRoutes(server, importHandler)
+	httpecho.RegisterRoutes(server, importHandler, userHandler)
 
 	server.GET("/healthz", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "ok"})

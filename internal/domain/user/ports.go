@@ -18,3 +18,7 @@ type ImportJobRepository interface {
 type UserBulkImporter interface {
 	ImportChunk(ctx context.Context, jobID string, users []User) (ImportChunkResult, error)
 }
+
+type UserQueryRepository interface {
+	GetByID(ctx context.Context, userID string) (*User, error)
+}
