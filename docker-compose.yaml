@@ -20,6 +20,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: migrate
     depends_on:
       postgres:
         condition: service_healthy
@@ -30,6 +31,34 @@ services:
         "up"
       ]
     restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PORT: "8080"
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+      IMPORT_BASE_DIR: /app
+      IMPORT_WORKERS: ${IMPORT_WORKERS:-10}
+      IMPORT_CHUNK_SIZE: ${IMPORT_CHUNK_SIZE:-10000}
+      IMPORT_JOB_LEASE_SECONDS: ${IMPORT_JOB_LEASE_SECONDS:-60}
+    ports:
+      - "${PORT:-8080}:8080"
+    volumes:
+      - ./:/app:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data:

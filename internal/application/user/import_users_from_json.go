@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-
-	domain "github.com/mohammadpnp/user-import/internal/domain/user"
 )
 
 type StartImportUsersFromJSONInput struct {
@@ -22,11 +20,15 @@ type StartImportUsersFromJSON interface {
 	Execute(ctx context.Context, in StartImportUsersFromJSONInput) (StartImportUsersFromJSONOutput, error)
 }
 
-type startImportUsersFromJSON struct {
-	importJobRepo domain.ImportJobRepository
+type importJobEnqueuer interface {
+	Enqueue(ctx context.Context, sourcePath string) (string, error)
 }
 
-func NewStartImportUsersFromJSON(importJobRepo domain.ImportJobRepository) StartImportUsersFromJSON {
+type startImportUsersFromJSON struct {
+	importJobRepo importJobEnqueuer
+}
+
+func NewStartImportUsersFromJSON(importJobRepo importJobEnqueuer) StartImportUsersFromJSON {
 	return &startImportUsersFromJSON{importJobRepo: importJobRepo}
 }
 

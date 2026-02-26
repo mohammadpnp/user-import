@@ -4,11 +4,14 @@ Go service for importing users and addresses into Postgres using Echo + GORM wit
 
 ## Current Phase
 
-The import HTTP route is implemented and enqueues an import job into `import_jobs`.
+Queue + worker import pipeline is implemented.
 
 - Route: `POST /api/v1/imports/users`
-- Current behavior: validates input and creates a queued job
-- Next phase: worker execution pipeline (10 workers, `SKIP LOCKED`, streaming + COPY)
+- Worker pool: max 10 workers (`IMPORT_WORKERS`, clamped to 10)
+- Job claim strategy: `SELECT ... FOR UPDATE SKIP LOCKED` + lease heartbeat
+- Data path: stream JSON -> COPY into staging (`stg_users`, `stg_addresses`) -> set-based merge
+- User merge: upsert by external id (`id`) with email fallback
+- Address merge: replace-per-user for affected users
 
 ## Project Layout
 
@@ -39,7 +42,8 @@ Main variables:
 - `DOCKER_DATABASE_URL`: migration connection string inside Docker network
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`: Postgres container config
 - `TEST_DATABASE_URL`: integration test DB DSN
-- `IMPORT_WORKERS`, `IMPORT_CHUNK_SIZE`, `IMPORT_JOB_LEASE_SECONDS`: import worker tuning (next phase)
+- `IMPORT_WORKERS`, `IMPORT_CHUNK_SIZE`, `IMPORT_JOB_LEASE_SECONDS`: import worker tuning
+- `IMPORT_BASE_DIR`: base directory for `source_path` file resolution
 
 ## Database & Migrations
 
@@ -53,6 +57,12 @@ Run migrations:
 
 ```bash
 docker compose run --rm migrate
+```
+
+Or run full stack:
+
+```bash
+docker compose up --build -d
 ```
 
 ## Run API
@@ -101,6 +111,14 @@ Validation error (`400`):
   }
 }
 ```
+
+## Import Execution Notes
+
+- The request only enqueues the job; workers process it asynchronously.
+- Progress and counts are stored in `import_jobs`.
+- Re-running the same file is idempotent:
+  - first run: mostly `imported_count`
+  - later runs: mostly `updated_count`
 
 ## Tests
 
